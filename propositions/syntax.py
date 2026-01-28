@@ -153,6 +153,14 @@ class Formula:
             A set of all variable names used in the current formula.
         """
         # Task 1.2
+        if is_variable(self.root):
+            return {self.root}
+        elif is_constant(self.root):
+            return set()
+        elif is_unary(self.root):
+            return self.first.variables()
+        else:  # binary operator
+            return self.first.variables() | self.second.variables()
 
     @memoized_parameterless_method
     def operators(self) -> Set[str]:
@@ -163,6 +171,15 @@ class Formula:
             current formula.
         """
         # Task 1.3
+        if is_variable(self.root):
+            return set()
+        elif is_constant(self.root) or is_unary(self.root):
+            result = {self.root}
+            if is_unary(self.root):
+                result |= self.first.operators()
+            return result
+        else:  # binary operator
+            return {self.root} | self.first.operators() | self.second.operators()
         
     @staticmethod
     def _parse_prefix(string: str) -> Tuple[Union[Formula, None], str]:
@@ -182,6 +199,69 @@ class Formula:
             is a string with some human-readable content.
         """
         # Task 1.4
+        if not string:
+            return None, "Empty string"
+        
+        # Case 1: variable
+        if is_variable(string[0]):
+            i = 1
+            while i < len(string) and string[i].isdigit():
+                i += 1
+            var_name = string[:i]
+            return Formula(var_name), string[i:]
+        
+        # Case 2: constant
+        if is_constant(string[0]):
+            const = string[0]
+            return Formula(const), string[1:]
+        
+        # Case 3: unary operator '~'
+        if string[0] == '~':
+            if len(string) == 1:
+                return None, "Missing operand after '~'"
+            sub_formula, remainder = Formula._parse_prefix(string[1:])
+            if sub_formula is None:
+                return None, remainder  # pass error forward
+            return Formula('~', sub_formula), remainder
+        
+        # Case 4: binary operator in parentheses '(' ... op ... ')'
+        if string[0] == '(':
+            # Parse left operand
+            left, rem = Formula._parse_prefix(string[1:])
+            if left is None:
+                return None, rem
+            
+            # Find operator
+            if not rem:
+                return None, "Missing operator after left operand"
+            
+            # Determine operator
+            if rem.startswith('&'):
+                op = '&'
+            elif rem.startswith('|'):
+                op = '|'
+            elif rem.startswith('->'):
+                op = '->'
+            else:
+                # Try to show problematic part
+                snippet = rem[:10] + '...' if len(rem) > 10 else rem
+                return None, f"Expected binary operator, got '{snippet}'"
+            
+            rem = rem[len(op):]
+            
+            # Parse right operand
+            right, rem = Formula._parse_prefix(rem)
+            if right is None:
+                return None, rem
+            
+            # Check closing parenthesis
+            if not rem.startswith(')'):
+                return None, "Missing closing parenthesis"
+            
+            return Formula(op, left, right), rem[1:]
+        
+        # No valid prefix found
+        return None, f"Unexpected character '{string[0]}'"
 
     @staticmethod
     def is_formula(string: str) -> bool:
@@ -195,6 +275,8 @@ class Formula:
             representation of a formula, ``False`` otherwise.
         """
         # Task 1.5
+        formula, remainder = Formula._parse_prefix(string)
+        return formula is not None and remainder == ""
         
     @staticmethod
     def parse(string: str) -> Formula:
@@ -208,6 +290,10 @@ class Formula:
         """
         assert Formula.is_formula(string)
         # Task 1.6
+        formula, remainder = Formula._parse_prefix(string)
+        assert formula is not None
+        assert remainder == ""
+        return formula
 
     def polish(self) -> str:
         """Computes the polish notation representation of the current formula.
@@ -283,5 +369,6 @@ class Formula:
                    is_binary(operator)
             assert substitution_map[operator].variables().issubset({'p', 'q'})
         # Task 3.4
+
 
 
