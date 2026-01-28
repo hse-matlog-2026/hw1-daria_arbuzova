@@ -302,6 +302,12 @@ class Formula:
             The polish notation representation of the current formula.
         """
         # Optional Task 1.7
+        if is_variable(self.root) or is_constant(self.root):
+            return self.root
+        elif is_unary(self.root):
+            return self.root + self.first.polish()
+        else:  # binary
+            return self.root + self.first.polish() + self.second.polish()
 
     @staticmethod
     def parse_polish(string: str) -> Formula:
@@ -314,6 +320,55 @@ class Formula:
             A formula whose polish notation representation is the given string.
         """
         # Optional Task 1.8
+        def parse_prefix(s: str):
+            if not s:
+                return None, s
+            
+            # Переменная
+            if is_variable(s[0]):
+                i = 1
+                while i < len(s) and s[i].isdigit():
+                    i += 1
+                return Formula(s[:i]), s[i:]
+            
+            # Константа
+            if is_constant(s[0]):
+                return Formula(s[0]), s[1:]
+            
+            # Унарный оператор
+            if s[0] == '~':
+                sub, rem = parse_prefix(s[1:])
+                if sub is None:
+                    return None, rem
+                return Formula('~', sub), rem
+            
+            # Бинарный оператор
+            if s[0] in {'&', '|'}:
+                op = s[0]
+                left, rem = parse_prefix(s[1:])
+                if left is None:
+                    return None, rem
+                right, rem = parse_prefix(rem)
+                if right is None:
+                    return None, rem
+                return Formula(op, left, right), rem
+            
+            if s.startswith('->'):
+                op = '->'
+                left, rem = parse_prefix(s[2:])
+                if left is None:
+                    return None, rem
+                right, rem = parse_prefix(rem)
+                if right is None:
+                    return None, rem
+                return Formula(op, left, right), rem
+            
+            return None, s
+        
+        formula, remainder = parse_prefix(string)
+        if formula is None or remainder:
+            raise ValueError(f"Invalid polish notation: '{string}'")
+        return formula
 
     def substitute_variables(self, substitution_map: Mapping[str, Formula]) -> \
             Formula:
@@ -369,6 +424,7 @@ class Formula:
                    is_binary(operator)
             assert substitution_map[operator].variables().issubset({'p', 'q'})
         # Task 3.4
+
 
 
 
