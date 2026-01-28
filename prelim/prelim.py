@@ -21,5 +21,6 @@ def half(x: int) -> int:
     """
     assert x % 2 == 0
     # Task 0.1
-    return x >> 2
+    return x >> 1
+
 
