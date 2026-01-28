@@ -103,13 +103,20 @@ class Formula:
             self.root, self.first, self.second = root, first, second
 
     @memoized_parameterless_method
-    def __repr__(self) -> str:
-        """Computes the string representation of the current formula.
+def __repr__(self) -> str:
+    """Computes the string representation of the current formula.
 
-        Returns:
-            The standard string representation of the current formula.
-        """
-        # Task 1.1
+    Returns:
+        The standard string representation of the current formula.
+    """
+    # Task 1.1
+    if is_variable(self.root) or is_constant(self.root):
+        return self.root
+    elif is_unary(self.root):  # '~'
+        return self.root + str(self.first)
+    else:  # binary operator
+        return '(' + str(self.first) + self.root + str(self.second) + ')'
+        
 
     def __eq__(self, other: object) -> bool:
         """Compares the current formula with the given one.
@@ -276,3 +283,4 @@ class Formula:
                    is_binary(operator)
             assert substitution_map[operator].variables().issubset({'p', 'q'})
         # Task 3.4
+
