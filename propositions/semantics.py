@@ -85,6 +85,12 @@ def all_models(variables: Sequence[str]) -> Iterable[Model]:
     """
     for v in variables:
         assert is_variable(v)
+    n = len(variables)
+    for i in range(2 ** n):
+        model = {}
+        for j, var in enumerate(variables):
+            model[var] = bool((i >> (n - j - 1)) & 1)
+        yield model
     # Task 2.2
 
 def truth_values(formula: Formula, models: Iterable[Model]) -> Iterable[bool]:
@@ -103,6 +109,8 @@ def truth_values(formula: Formula, models: Iterable[Model]) -> Iterable[bool]:
         >>> list(truth_values(Formula.parse('~(p&q76)'), all_models(['p', 'q76'])))
         [True, True, True, False]
     """
+    for model in models:
+        yield evaluate(formula, model)
     # Task 2.3
 
 def print_truth_table(formula: Formula) -> None:
@@ -121,6 +129,17 @@ def print_truth_table(formula: Formula) -> None:
         | T | F   | T        |
         | T | T   | F        |
     """
+    variables_list = sorted(formula.variables())
+    
+    header = " | ".join(variables_list + [str(formula)])
+    print(header)
+    print("-" * len(header))
+    
+    for model in all_models(variables_list):
+        row_values = [str(model[var]) for var in variables_list]
+        result = evaluate(formula, model)
+        row = " | ".join(row_values + [str(result)])
+        print(row)
     # Task 2.4
 
 def is_tautology(formula: Formula) -> bool:
@@ -132,6 +151,11 @@ def is_tautology(formula: Formula) -> bool:
     Returns:
         ``True`` if the given formula is a tautology, ``False`` otherwise.
     """
+    variables_list = list(formula.variables())
+    for model in all_models(variables_list):
+        if not evaluate(formula, model):
+            return False
+    return True
     # Task 2.5a
 
 def is_contradiction(formula: Formula) -> bool:
@@ -143,6 +167,11 @@ def is_contradiction(formula: Formula) -> bool:
     Returns:
         ``True`` if the given formula is a contradiction, ``False`` otherwise.
     """
+    variables_list = list(formula.variables())
+    for model in all_models(variables_list):
+        if evaluate(formula, model):
+            return False
+    return True
     # Task 2.5b
 
 def is_satisfiable(formula: Formula) -> bool:
@@ -154,6 +183,7 @@ def is_satisfiable(formula: Formula) -> bool:
     Returns:
         ``True`` if the given formula is satisfiable, ``False`` otherwise.
     """
+    return not is_contradiction(formula)
     # Task 2.5c
 
 def _synthesize_for_model(model: Model) -> Formula:
@@ -272,3 +302,4 @@ def is_sound_inference(rule: InferenceRule) -> bool:
         ``True`` if the given inference rule is sound, ``False`` otherwise.
     """
     # Task 4.3
+
