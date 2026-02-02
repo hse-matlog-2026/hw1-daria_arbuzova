@@ -71,6 +71,46 @@ def graph3coloring_to_formula(graph: Graph) -> Formula:
         graph is 3-colorable.
     """
     assert is_graph(graph)
+    n_vertices, edges = graph
+    
+    formulas = []
+    
+    for v in range(1, n_vertices + 1):
+        vertex_formulas = []
+        for c in range(1, 4):
+            var_name = f"x{v}_{c}"
+            vertex_formulas.append(Formula(var_name))
+        formula = Formula("|", vertex_formulas[0], vertex_formulas[1])
+        formula = Formula("|", formula, vertex_formulas[2])
+        formulas.append(formula)
+
+    for v in range(1, n_vertices + 1):
+        for c1 in range(1, 4):
+            for c2 in range(c1 + 1, 4):
+                var1 = f"x{v}_{c1}"
+                var2 = f"x{v}_{c2}"
+                formula = Formula("|", 
+                                 Formula("~", Formula(var1)),
+                                 Formula("~", Formula(var2)))
+                formulas.append(formula)
+    
+    for u, v in edges:
+        for c in range(1, 4):
+            var_u = f"x{u}_{c}"
+            var_v = f"x{v}_{c}"
+            formula = Formula("|",
+                             Formula("~", Formula(var_u)),
+                             Formula("~", Formula(var_v)))
+            formulas.append(formula)
+
+    if not formulas:
+        return Formula("T")
+    
+    result = formulas[0]
+    for formula in formulas[1:]:
+        result = Formula("&", result, formula)
+    
+    return result
     # Optional Task 2.10a
 
 def assignment_to_3coloring(graph: Graph, assignment: Model) -> \
@@ -93,6 +133,20 @@ def assignment_to_3coloring(graph: Graph, assignment: Model) -> \
     assert is_graph(graph)
     formula = graph3coloring_to_formula(graph)
     assert evaluate(formula, assignment)
+            
+    coloring = {}
+
+    for v in range(1, n_vertices + 1):
+        for c in range(1, 4):
+            var_name = f"x{v}_{c}"
+            if assignment.get(var_name, False):
+                coloring[v] = c
+                break
+        else:
+            raise ValueError(f"No color assigned to vertex {v} in satisfying assignment")
+    assert is_valid_3coloring(graph, coloring)
+    
+    return coloring
     # Optional Task 2.10b
 
 def tricolor_graph(graph: Graph) -> Union[Mapping[int, int], None]:
@@ -111,3 +165,4 @@ def tricolor_graph(graph: Graph) -> Union[Mapping[int, int], None]:
         if evaluate(formula, assignment):
             return assignment_to_3coloring(graph, assignment)
     return None
+
