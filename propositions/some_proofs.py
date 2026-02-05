@@ -30,6 +30,20 @@ def prove_and_commutativity() -> Proof:
         the inference rules `A_RULE`, `AE1_RULE`, and `AE2_RULE`.
     """
     # Task 4.7
+    statement = InferenceRule(
+        [Formula.parse('(p&q)')],
+        Formula.parse('(q&p)')
+    )
+    
+    lines = [
+        Proof.Line(Formula.parse('(p&q)')),
+        Proof.Line(Formula.parse('p'), AE2_RULE, [0]),
+        Proof.Line(Formula.parse('q'), AE1_RULE, [0]),
+        Proof.Line(Formula.parse('(q&p)'), A_RULE, [2, 1])
+    ]
+    rules = {A_RULE, AE1_RULE, AE2_RULE}
+    
+    return Proof(statement, rules, lines)
 
 def prove_I0() -> Proof:
     """Proves `~propositions.axiomatic_systems.I0` via
@@ -43,6 +57,29 @@ def prove_I0() -> Proof:
         `~propositions.axiomatic_systems.D`.
     """
     # Task 4.8
+    statement = InferenceRule([], Formula.parse('(p->p)'))
+    
+    i1_instance = Formula.parse('((p->p)->(p->(p->p)))')
+    
+    d_instance = Formula.parse('((p->(p->p))->((p->p)->(p->p)))')
+    
+    i1_simple = Formula.parse('(p->(p->p))')
+    
+    d_formula = Formula.parse('((p->((p->p)->p))->((p->(p->p))->(p->p)))')
+    i1_formula1 = Formula.parse('(p->((p->p)->p))')
+    i1_formula2 = Formula.parse('(p->(p->p))')
+    
+    lines = [
+        Proof.Line(d_formula, D, []),
+        Proof.Line(i1_formula1, I1, []),
+        Proof.Line(Formula.parse('((p->(p->p))->(p->p))'), MP, [1, 0]),
+        Proof.Line(i1_formula2, I1, []),
+        Proof.Line(Formula.parse('(p->p)'), MP, [3, 2])
+    ]
+    
+    rules = {MP, I1, D}
+    
+    return Proof(statement, rules, lines)
 
 #: Hypothetical syllogism
 HS = InferenceRule([Formula.parse('(p->q)'), Formula.parse('(q->r)')],
@@ -61,6 +98,26 @@ def prove_hypothetical_syllogism() -> Proof:
         `~propositions.axiomatic_systems.D`.
     """
     # Task 5.5
+    i0_proof = prove_I0()
+    
+    statement = InferenceRule(
+        [Formula.parse('(p->q)'), Formula.parse('(q->r)')],
+        Formula.parse('(p->r)')
+    )
+    
+    lines = [
+        Proof.Line(Formula.parse('(p->q)')),
+        Proof.Line(Formula.parse('(q->r)')),
+        Proof.Line(Formula.parse('((q->r)->(p->(q->r)))'), I1, []),
+        Proof.Line(Formula.parse('(p->(q->r))'), MP, [1, 2]),
+        Proof.Line(Formula.parse('((p->(q->r))->((p->q)->(p->r)))'), D, []),
+        Proof.Line(Formula.parse('((p->q)->(p->r))'), MP, [3, 4]),
+        Proof.Line(Formula.parse('(p->r)'), MP, [0, 5])
+    ]
+    
+    rules = {MP, I0, I1, D}
+    
+    return Proof(statement, rules, lines)
 
 def prove_I2() -> Proof:
     """Proves `~propositions.axiomatic_systems.I2` via
@@ -77,6 +134,14 @@ def prove_I2() -> Proof:
         `~propositions.axiomatic_systems.N`.
     """
     # Optional Task 6.7a
+    statement = InferenceRule([], Formula.parse('(~p->(p->q))'))
+    lines = [
+        Proof.Line(Formula.parse('(q->(~p->q))'), I1, []),
+        Proof.Line(Formula.parse('(~q->(~p->q))'), N, []),
+    ]
+    
+    rules = {MP, I0, I1, D, N}
+    return Proof(statement, rules, lines)
 
 #: Double-negation elimination
 _NNE = InferenceRule([], Formula.parse('(~~p->p)'))
@@ -249,3 +314,4 @@ def prove_NO() -> Proof:
         `~propositions.axiomatic_systems.OE`.
     """
     # Optional Task 6.9c
+
