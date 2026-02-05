@@ -112,9 +112,9 @@ class Formula:
         # Task 1.1
         if is_variable(self.root) or is_constant(self.root):
             return self.root
-        elif is_unary(self.root):  # '~'
+        elif is_unary(self.root):
             return self.root + str(self.first)
-        else:  # binary operator
+        else: 
             return '(' + str(self.first) + self.root + str(self.second) + ')'
         
 
@@ -159,7 +159,7 @@ class Formula:
             return set()
         elif is_unary(self.root):
             return self.first.variables()
-        else:  # binary operator
+        else:
             return self.first.variables() | self.second.variables()
 
     @memoized_parameterless_method
@@ -178,7 +178,7 @@ class Formula:
             if is_unary(self.root):
                 result |= self.first.operators()
             return result
-        else:  # binary operator
+        else:
             return {self.root} | self.first.operators() | self.second.operators()
         
     @staticmethod
@@ -202,7 +202,6 @@ class Formula:
         if not string:
             return None, "Empty string"
         
-        # Case 1: variable
         if is_variable(string[0]):
             i = 1
             while i < len(string) and string[i].isdigit():
@@ -210,32 +209,26 @@ class Formula:
             var_name = string[:i]
             return Formula(var_name), string[i:]
         
-        # Case 2: constant
         if is_constant(string[0]):
             const = string[0]
             return Formula(const), string[1:]
         
-        # Case 3: unary operator '~'
         if string[0] == '~':
             if len(string) == 1:
                 return None, "Missing operand after '~'"
             sub_formula, remainder = Formula._parse_prefix(string[1:])
             if sub_formula is None:
-                return None, remainder  # pass error forward
+                return None, remainder 
             return Formula('~', sub_formula), remainder
         
-        # Case 4: binary operator in parentheses '(' ... op ... ')'
         if string[0] == '(':
-            # Parse left operand
             left, rem = Formula._parse_prefix(string[1:])
             if left is None:
                 return None, rem
             
-            # Find operator
             if not rem:
                 return None, "Missing operator after left operand"
             
-            # Determine operator
             if rem.startswith('&'):
                 op = '&'
             elif rem.startswith('|'):
@@ -243,24 +236,20 @@ class Formula:
             elif rem.startswith('->'):
                 op = '->'
             else:
-                # Try to show problematic part
                 snippet = rem[:10] + '...' if len(rem) > 10 else rem
                 return None, f"Expected binary operator, got '{snippet}'"
             
             rem = rem[len(op):]
             
-            # Parse right operand
             right, rem = Formula._parse_prefix(rem)
             if right is None:
                 return None, rem
             
-            # Check closing parenthesis
             if not rem.startswith(')'):
                 return None, "Missing closing parenthesis"
             
             return Formula(op, left, right), rem[1:]
         
-        # No valid prefix found
         return None, f"Unexpected character '{string[0]}'"
 
     @staticmethod
@@ -306,7 +295,7 @@ class Formula:
             return self.root
         elif is_unary(self.root):
             return self.root + self.first.polish()
-        else:  # binary
+        else:
             return self.root + self.first.polish() + self.second.polish()
 
     @staticmethod
@@ -324,25 +313,21 @@ class Formula:
             if not s:
                 return None, s
             
-            # Переменная
             if is_variable(s[0]):
                 i = 1
                 while i < len(s) and s[i].isdigit():
                     i += 1
                 return Formula(s[:i]), s[i:]
             
-            # Константа
             if is_constant(s[0]):
                 return Formula(s[0]), s[1:]
             
-            # Унарный оператор
             if s[0] == '~':
                 sub, rem = parse_prefix(s[1:])
                 if sub is None:
                     return None, rem
                 return Formula('~', sub), rem
             
-            # Бинарный оператор
             if s[0] in {'&', '|'}:
                 op = s[0]
                 left, rem = parse_prefix(s[1:])
