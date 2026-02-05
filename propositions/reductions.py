@@ -136,6 +136,8 @@ def assignment_to_3coloring(graph: Graph, assignment: Model) -> \
             
     coloring = {}
 
+    print("testing git")
+
     for v in range(1, n_vertices + 1):
         for c in range(1, 4):
             var_name = f"x{v}_{c}"
